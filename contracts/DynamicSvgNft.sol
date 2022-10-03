@@ -13,6 +13,7 @@ contract DynamicSvgNft is ERC721 {
     string private constant base64EncodedSvgPrefix = "data:image/svg+xml;base64,";
     AggregatorV3Interface internal immutable i_priceFeed;
     mapping(uint256 => int256) public s_tokenIdToHighValue;
+    string public turi;
 
     event CreatedNFT(uint256 indexed tokenId, int256 highValue);
 
@@ -28,10 +29,10 @@ contract DynamicSvgNft is ERC721 {
     }
 
     function mintNft(int256 highValue) public {
-        s_tokenIdToHighValue[s_tokenCounter] = highValue;
         _safeMint(msg.sender, s_tokenCounter);
-        s_tokenCounter++;
+        s_tokenIdToHighValue[s_tokenCounter] = highValue;
         emit CreatedNFT(s_tokenCounter, highValue);
+        s_tokenCounter++;
     }
 
     function _baseURI() internal pure override returns (string memory) {
@@ -50,22 +51,47 @@ contract DynamicSvgNft is ERC721 {
         if (price >= s_tokenIdToHighValue[tokenId]) {
             imageURI = i_highImageUri;
         }
-        string(
-            abi.encodePacked(
-                _baseURI(),
-                Base64.encode(
-                    bytes(
-                        abi.encodePacked(
-                            '{"name":"',
-                            name(), // You can add whatever name here
-                            '", "description":"An NFT that changes based on the Chainlink Feed", ',
-                            '"attributes": [{"trait_type": "coolness", "value": 100}], "image":"',
-                            imageURI,
-                            '"}'
+        return
+            string(
+                abi.encodePacked(
+                    _baseURI(),
+                    Base64.encode(
+                        bytes(
+                            abi.encodePacked(
+                                '{"name":"',
+                                name(), // You can add whatever name here
+                                '", "description":"An NFT that changes based on the Chainlink Feed", ',
+                                '"attributes": [{"trait_type": "coolness", "value": 100}], "image":"',
+                                imageURI,
+                                '"}'
+                            )
                         )
                     )
                 )
-            )
-        );
+            );
+    }
+
+    function getLowSvgUri() public view returns (string memory) {
+        return i_lowImageUri;
+    }
+
+    function getHighSvgUri() public view returns (string memory) {
+        return i_lowImageUri;
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return i_priceFeed;
+    }
+
+    function getTokenId() public view returns (uint256) {
+        return s_tokenCounter;
+    }
+
+    function getHighValueOfTokenId(uint256 tokenId) public view returns (int256) {
+        return s_tokenIdToHighValue[tokenId];
+    }
+
+    function getTUri() public view returns (string memory) {
+        return turi;
     }
 }
